@@ -1,6 +1,7 @@
 import random
 import string
 from PIL import Image
+from random_word import RandomWords
 import numpy as np
 
 def generate_email():
@@ -14,6 +15,10 @@ def generate_email():
     email = username + random.choice(['.', '_', '']) + username + '@' + domain
     return email
 
+def generate_word():
+    r = RandomWords()
+    return r.get_random_word()
+
 def JPEG_compression(path, percentage):
     # Open the image
     image = Image.open(path)
@@ -24,19 +29,21 @@ def JPEG_compression(path, percentage):
 
 #define our sick pixelation function
 def pixelate(path, pixelation_amount):
+    # Open the image
     image = Image.open(path)
-    width, height = image.size
-    pixel_size = pixelation_amount
 
-    # Calculate the number of pixel blocks horizontally and vertically
-    num_horiz_blocks = (width + pixel_size - 1) // pixel_size
-    num_vert_blocks = (height + pixel_size - 1) // pixel_size
+    # Get the aspect ratio of the image
+    aspect_ratio = float(image.width) / float(image.height)
+
+    # Calculate the size of the pixelated image
+    pixelated_width = int(image.width / pixelation_amount)
+    pixelated_height = int(pixelated_width / aspect_ratio)
 
     # Resize the image to the pixelated size
-    image_tiny = image.resize((num_horiz_blocks, num_vert_blocks), Image.NEAREST)
+    image_small = image.resize((pixelated_width, pixelated_height), resample=Image.BOX)
 
-    # Resize the pixelated image back to the original size
-    pixelated = image_tiny.resize((width, height), Image.NEAREST)
+    # Scale the pixelated image back up to the original size
+    pixelated = image_small.resize((image.width, image.height), resample=Image.NEAREST)
 
     # Save the pixelated image
     substring = path.split(".jpg")[0]  
