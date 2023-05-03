@@ -1,0 +1,6 @@
+numpy
+PIL
+matplotlib
+pillow
+random-words
+keras
