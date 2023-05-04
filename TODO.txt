@@ -1,0 +1,32 @@
+bank nummers met hogere pix
+
+volledige zinnen
+
+andere samenstelling layers
+
+-------------------------------
+-------------------------------
+-------------------------------
+
+test deze dingen:
+
+1. Increase the model capacity: Since your input images have a size of 48x500 pixels, you can afford to use deeper networks. Try adding more convolutional 
+layers, increasing the number of filters in the existing layers, or increasing the number of units in the dense layers. Experiment with different architectures and choose the one that performs best.
+
+2. Use larger batch sizes: Larger batch sizes can help the model generalize better by averaging out the gradients computed on different samples. This is 
+particularly useful when using deep networks with a large number of parameters. Experiment with different batch sizes and choose the one that performs best.
+
+3. Use data augmentation: Data augmentation can be used to increase the size of the training set and improve the generalization of the model. You can use 
+different types of data augmentation techniques, such as random cropping, rotation, flipping, and adding noise to the images.
+
+4. Use different types of loss functions: The binary cross-entropy loss is a good choice for binary classification tasks, but it may not be the best choice 
+for your problem. You can try different types of loss functions, such as mean squared error (MSE) or structural similarity index (SSIM) loss, and choose the one that performs best.
+
+5. Use transfer learning: Transfer learning can be used to leverage pre-trained models and improve the performance of your model. You can use pre-trained 
+models such as VGG16, ResNet, or Inception as feature extractors and train your autoencoder on top of these features. This can help your model to learn better representations of the input images.
+
+6. Use early stopping: Early stopping can be used to prevent overfitting of the model. You can monitor the validation loss during training and stop training
+ when the validation loss starts increasing.
+
+7. Increase the training time: Training a deep neural network can take a long time, particularly if you are using a large dataset. You can increase the 
+number of epochs or use a more powerful machine to speed up the training process.
