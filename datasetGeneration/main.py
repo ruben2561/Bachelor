@@ -34,12 +34,12 @@ def generate_random_blurred(amount, save_path):
 
 def generate_temp(amount, save_path):
     for i in alc:
-        newpath = r'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/' + "test" 
+        newpath = r'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor_zelf/dataset/' + "test" 
         if not os.path.exists(newpath):
             os.makedirs(newpath)
         text = i
         for k in range(3):
-            save_pathh = 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/' + "test" + "/"
+            save_pathh = 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor_zelf/dataset/' + "test" + "/"
 
             jpegPercentage = random.choice([0,10,20,30,40,50,60,70,80,90,100])
             gaussianKernal = random.choice([1,2,3,4,5,6,7,8])
@@ -224,7 +224,7 @@ def all_letter_combinations(start):
         for j in range(0, len(nummers)):
             nummer1 = nummers[i]
             nummer2 = nummers[j]
-            newpath = "C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/nummers4/"  + nummer1 + nummer2
+            newpath = "C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor_zelf/dataset/nummers4/"  + nummer1 + nummer2
             if not os.path.exists(newpath):
                 os.makedirs(newpath)
             for jpeg in jpegPercentage:

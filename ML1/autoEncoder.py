@@ -14,19 +14,20 @@ import glob
 import textwrap
 from random_word import RandomWords
 import matplotlib.pyplot as plt
+import essential_generators
+import re
 
-
-folder_path = "C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/"
+folder_path = "C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor_zelf/"
 
 
 # Define the font and font size
 font = ImageFont.truetype("arial.ttf", 36)
 
 #generate a image with jpeg, pixelation and input text
-def generate_image_with_jpeg_pixelation(jpeg, pixelation, text, save_path, save_path_correct):
+def generate_image_with_jpeg_pixelation(jpeg, pixelation, text, font_type, font_size, save_path, save_path_correct, save_correct_bool):
     
     #set font and font size
-    font = ImageFont.truetype("C:/Windows/Fonts/OCRAEXT.ttf", size=24)
+    font = ImageFont.truetype(font_type, size=font_size)
 
     # Determine the size of the text
     text_width, text_height = font.getsize(text)
@@ -41,8 +42,15 @@ def generate_image_with_jpeg_pixelation(jpeg, pixelation, text, save_path, save_
     draw = ImageDraw.Draw(image)
     draw.text((10, 10), text, font=font, fill=(0, 0, 0))
 
-    path2 = save_path_correct
-    image.save(path2 + text + "__correct.jpg", format='JPEG', quality=jpeg)
+    if save_correct_bool == True:
+        if not os.path.exists(folder_path + save_path_correct):
+            os.makedirs(folder_path + save_path_correct)
+        path2 = folder_path + save_path_correct
+        cleaned_filename = re.sub(r'[<>:"/\\|?*]', '', text)
+        cleaned_filename = re.sub(r'[<>:"/\\|?*\x00-\x1F]', '', cleaned_filename)
+        cleaned_filename = re.sub(r'\s+', ' ', cleaned_filename) # Replace multiple spaces with a single space
+        cleaned_filename = cleaned_filename.strip() # Remove leading/trailing spaces
+        image.save(path2 + cleaned_filename + "__correct.jpg", format='JPEG', quality=jpeg)
 
     # Get the aspect ratio of the image
     aspect_ratio = float(image.width) / float(image.height)
@@ -57,210 +65,47 @@ def generate_image_with_jpeg_pixelation(jpeg, pixelation, text, save_path, save_
     # Scale the pixelated image back up to the original size
     pixelated = image_small.resize((image.width, image.height), resample=Image.NEAREST)
 
+    if not os.path.exists(folder_path + save_path):
+        os.makedirs(folder_path + save_path)
     # Save the pixelated image
-    pixelated.save(save_path + text + "__jpeg" + str(jpeg) + "__pix" + str(pixelation) + ".jpg", format='JPEG', quality=jpeg)
+    cleaned_filename = re.sub(r'[<>:"/\\|?*]', '', text)
+    cleaned_filename = re.sub(r'[<>:"/\\|?*\x00-\x1F]', '', cleaned_filename)
+    cleaned_filename = re.sub(r'\s+', ' ', cleaned_filename) # Replace multiple spaces with a single space
+    cleaned_filename = cleaned_filename.strip() # Remove leading/trailing spaces
+    pixelated.save(folder_path + save_path + cleaned_filename + "__jpeg" + str(jpeg) + "__pix" + str(pixelation) + ".jpg", format='JPEG', quality=jpeg)
 
-def read_in_file(path, save_path, save_path_correct, pixel):
+def read_in_file(path, save_path, save_path_correct, pixel, save_correct_bool):
     with open(path) as f:
         for line in f:
             text = line.strip()
             #jpegPercentage = random.choice([70,80,90,100])
-            generate_image_with_jpeg_pixelation(100, pixel, text, save_path, save_path_correct)
+            generate_image_with_jpeg_pixelation(100, pixel, text, "arial.ttf", 24, save_path, save_path_correct, save_correct_bool)
 
-def train_model_connected_layers():
-    # This is the size of our encoded representations
-    encoding_dim = 256 # changed to 2784 was 32  # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
+def generate_dataset():
+    pixelation = [5, 6, 7, 8]
 
-    # This is our input image
-    input_img = keras.Input(shape=(68400,))
-    # "encoded" is the encoded representation of the input
-    encoded = layers.Dense(encoding_dim, activation='relu')(input_img)
-    # "decoded" is the lossy reconstruction of the input
-    decoded = layers.Dense(68400, activation='sigmoid')(encoded)
+    for pix in pixelation:
+        save_path = "dataset/images_emails_model_training_pix" + str(pix) + "/"
+        save_path_correct = "dataset/images_emails_model_training_correct_pix" + str(pix) + "/"
+        if pix == 5:
+            save_correct_bool = True
+        else:
+            save_correct_bool = False
+        read_in_file(folder_path + "email_dataset.txt", save_path, save_path_correct, pix, save_correct_bool)
+    
+    for pix in pixelation:
+        save_path = "dataset/images_numbers_model_training_pix" + str(pix) + "/"
+        save_path_correct = "dataset/images_numbers_model_training_correct_pix" + str(pix) + "/"
+        if pix == 5:
+            save_correct_bool = True
+        else:
+            save_correct_bool = False
+        for i in range(25500):
+            text = str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + " " + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + " " + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + " " + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9))
+            generate_image_with_jpeg_pixelation(100, pix, text, "arial.ttf", 24, save_path, save_path_correct, save_correct_bool)
 
-    # This model maps an input to its reconstruction
-    autoencoder = keras.Model(input_img, decoded)
-
-    # This model maps an input to its encoded representation
-    encoder = keras.Model(input_img, encoded)
-
-    # This is our encoded (32-dimensional) input
-    encoded_input = keras.Input(shape=(encoding_dim,))
-    # Retrieve the last layer of the autoencoder model
-    decoder_layer = autoencoder.layers[-1]
-    # Create the decoder model
-    decoder = keras.Model(encoded_input, decoder_layer(encoded_input))
-
-    autoencoder.compile(optimizer='adam', loss='mse')
-
-    ####
-    collection = []
-    labels = []
-    collection2 = []
-    save_path = 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_emails_feature_extraction/'
-    save_path2 = 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_email/'
-    for filename in os.listdir(save_path):
-            f = os.path.join(save_path, filename)
-            # checking if it is a file
-            if os.path.isfile(f):
-                im = Image.open(f).convert("L")
-                label = filename.split("__")[0]
-
-                # Get current width
-                width, height = im.size
-                # Calculate the amount of padding needed on each side
-                padding = (900 - width) // 2
-                # Create a new white image with the desired size
-                new_size = (900, height)
-                new_im = Image.new("L", new_size, color=255)
-                # Paste the original image into the center of the new image
-                new_im.paste(im, (padding, 0))
-
-                #grayscale_image = im.convert("L")
-                pix_val = new_im.getdata()
-                
-                labels.append(label)
-                collection.append(pix_val)
-
-    k = 0
-    for filename in os.listdir(save_path2):
-            if k < 20:
-                f = os.path.join(save_path2, filename)
-                # checking if it is a file
-                if os.path.isfile(f):
-                    im = Image.open(f).convert("L")
-
-                    # Get current width
-                    width, height = im.size
-                    # Calculate the amount of padding needed on each side
-                    padding = (900 - width) // 2
-                    # Create a new white image with the desired size
-                    new_size = (900, height)
-                    new_im = Image.new("L", new_size, color=255)
-                    # Paste the original image into the center of the new image
-                    new_im.paste(im, (padding, 0))
-
-                    #grayscale_image = im.convert("L")
-                    pix_val = new_im.getdata()
-                    
-                    collection2.append(pix_val)
-                    k += 1
     
 
-    # create the x_train and x_test arrays
-    x_train = np.asarray(collection[:10000], dtype=np.float32)
-    x_test = np.asarray(collection[10000:15000], dtype=np.float32)
-    x2_test = np.asarray(collection2, dtype=np.float32)
-
-
-    ####
-
-    x_train = x_train.astype('float32') / 255.
-    x_test = x_test.astype('float32') / 255.
-    x2_test = x2_test.astype('float32') / 255.
-    x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
-    x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
-    x2_test = x2_test.reshape((len(x2_test), np.prod(x2_test.shape[1:])))
-    
-    print(x_train.shape)
-    print(x_test.shape)
-    print(x2_test.shape)
-
-    print("start fitting")
-    autoencoder.fit(x_train, x_train,
-                    epochs=50, #was 50
-                    batch_size=256,
-                    shuffle=True,
-                    validation_data=(x_test, x_test))
-
-    # saving in json format
-    json_model = autoencoder.to_json()
-    json_file = open('autoencoder_json.json', 'w')
-    json_file.write(json_model)
-
-
-    # saving whole model
-    autoencoder.save('autoencoder_model.h5')
-
-
-def use_model_connected_layers():
-    encoder = keras.models.load_model('C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/autoencoder_model.h5')
-    #encoded_imgs = encoder.predict(x_test)
-    #decoded_imgs = decoder.predict(encoded_imgs)
-    # This is the size of our encoded representations
-    encoding_dim = 256 # changed to 2784 was 32  # 32 floats -> compression of factor 24.5, assuming the input is 784 floats
-
-    # This is our input image
-    input_img = keras.Input(shape=(68400,))
-    # "encoded" is the encoded representation of the input
-    encoded = layers.Dense(encoding_dim, activation='relu')(input_img)
-    # "decoded" is the lossy reconstruction of the input
-    decoded = layers.Dense(68400, activation='sigmoid')(encoded)
-    # This model maps an input to its reconstruction
-    autoencoder = keras.Model(input_img, decoded)
-    # This model maps an input to its encoded representation
-    encoder = keras.Model(input_img, encoded)
-    # This is our encoded (32-dimensional) input
-    encoded_input = keras.Input(shape=(encoding_dim,))
-    # Retrieve the last layer of the autoencoder model
-    decoder_layer = autoencoder.layers[-1]
-    # Create the decoder model
-    decoder = keras.Model(encoded_input, decoder_layer(encoded_input))
-    autoencoder.compile(optimizer='adam', loss='mse')
-
-
-    collection = []
-    save_path = 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_email/'
-
-    k = 0
-    for filename in os.listdir(save_path):
-            if k < 20:
-                f = os.path.join(save_path, filename)
-                # checking if it is a file
-                if os.path.isfile(f):
-                    im = Image.open(f).convert("L")
-                    # Get current width
-                    width, height = im.size
-                    # Calculate the amount of padding needed on each side
-                    padding = (900 - width) // 2
-                    # Create a new white image with the desired size
-                    new_size = (900, height)
-                    new_im = Image.new("L", new_size, color=255)
-                    # Paste the original image into the center of the new image
-                    new_im.paste(im, (padding, 0))
-                    #grayscale_image = im.convert("L")
-                    pix_val = new_im.getdata()
-                    collection.append(pix_val)
-                    k += 1
-    
-
-    # create the x_train and x_test arrays
-    x_test = np.asarray(collection, dtype=np.float32)
-    x_test = x_test.astype('float32') / 255.
-    x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
-
-    autoencoder = keras.models.load_model('C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/autoencoder_model.h5')
-    encoded_imgs = encoder.predict(x_test)
-    print(encoded_imgs[0])
-    decoded_imgs = decoder.predict(encoded_imgs)
-    print("\n\n")
-    print(decoded_imgs[0])
-
-    # Use Matplotlib (don't ask)
-    import matplotlib.pyplot as plt
-
-    for i in range(1):
-
-        """# Display the reconstructed image
-        img = x_test[i].reshape((76, 900))
-        img = Image.fromarray((img * 255).astype('uint8'), mode='L')
-        img.save('image_original.png')
-        img.show()"""
-
-        img = decoded_imgs[i].reshape((76, 900))
-        img = Image.fromarray((img * 255).astype('uint8'), mode='L')
-        img.save('image.reconstruct.png')
-        img.show()
 
 ###########################################
 ###########################################
@@ -527,12 +372,13 @@ def use_model_convolutional_layers_one(autoencoderName, save_pathName, resultNam
 ########main#########
 #####################
 #dont forget to enter folder path at the top
+#example fonts: "C:/Windows/Fonts/OCRAEXT.ttf", "arial.ttf"
 
 start = time.time()
 
 """train_model_convolutional_layers("dataset/images_numbers_model_training_pix7/",
                                   "dataset/images_numbers_model_training_correct_pix7/",
-                                  "autoencoder_model_convolutional_numbers_pix7.h5",
+                                  "trained_models/autoencoder_model_convolutional_numbers_pix7.h5",
                                    308,
                                    44)"""
 
@@ -543,58 +389,50 @@ start = time.time()
                                 308,
                                 44)"""
 
+
+
 """print("start dataset generation 6 pix")
 try:
-    read_in_file('C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/email_dataset.txt', "C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_emails_model_training_pix6/", "C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_emails_model_training_correct_pix6/", 6)
+    read_in_file('C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor_zelf/dataset/email_dataset.txt', "C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor_zelf/dataset/images_emails_model_training_pix6/", "C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_emails_model_training_correct_pix6/", 6)
 except:
     c = 0
 end = time.time()
-print(str(end - start) + " seconds")
-start = time.time()
-print("end dataset generation pix6" + "\n")"""
+print(str(end - start) + " seconds")"""
+count = 0
+while count < 25100:
+    try:
+        start2 = time.time()
+        
+        def clean_sentence(sentence):
+            cleaned_sentence = ''.join(c for c in sentence if c.isalnum() or c.isspace() or c in string.punctuation)
+            return cleaned_sentence.strip()
 
-"""print("start model generation pix6")
-try:
-    train_model_convolutional_layers(6)
-except:
-    c = 0
-end = time.time()
-print(str(end - start) + " seconds")
-start = time.time()
-print("end model generation pix6" + "\n")"""
+        gen = essential_generators.DocumentGenerator()
 
-"""print("start model testing pix6")
-try:
-    use_model_convolutional_layers(6)
-except:
-    c = 0
+        while True:
+            sentence = gen.sentence()
+            if len(sentence) > 100 or any(ord(c) >= 128 for c in sentence):
+                continue
+            cleaned_sentence = clean_sentence(sentence)
+            if len(cleaned_sentence) > 0:
+                break
 
-end = time.time()
-print(str(end - start) + " seconds")
-start = time.time()
-print("end model testing pix6" + "\n")"""
+        print(sentence + "   " + str(len(sentence)))
+        generate_image_with_jpeg_pixelation(100, 5, sentence, "arial.ttf", 24, "dataset/images_sentences_model_training_pix5/", "dataset/images_sentences_model_training_correct_pix5/", True)
+        end2 = time.time()
+        print(str(end2 - start2) + " seconds")
+        count += 1
+    except:
+        pass
 
-"""for i in range(25500):
-    text = str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + " " + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + " " + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + " " + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9)) + str(random.randint(0,9))
-    generate_image_with_jpeg_pixelation(100, 7, text, 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_pix7/', 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_correct_pix7/')"""
+train_model_convolutional_layers("dataset/images_sentences_model_training_pix5/",
+                                  "dataset/images_sentences_model_training_correct_pix5/",
+                                  "trained_models/autoencoder_model_convolutional_sentences_pix5.h5",
+                                   1200,
+                                   48)
 
-"""print("start words generation pix5")
-for i in range(10000):
-        if i < 10:
-            generate_image_with_jpeg_pixelation(100, 5, "000" + str(i), 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_pix5/', 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_correct_pix5/')
-        elif i < 100:
-            generate_image_with_jpeg_pixelation(100, 5, "00" + str(i), 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_pix5/', 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_correct_pix5/')
-        elif i < 1000:
-             generate_image_with_jpeg_pixelation(100, 5, "0" + str(i), 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_pix5/', 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_correct_pix5/')
-        else:
-            generate_image_with_jpeg_pixelation(100, 5, str(i), 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_pix5/', 'C:/Users/ruben/Documents/school/school 2022-2023/bachelor/Bachelor/dataset/images_numbers_model_training_correct_pix5/')
-    
 
 end = time.time()
 print(str(end - start) + " seconds")
-print("end words generation pix5" + "\n")"""
-
-
-
 #####################
 #####################
